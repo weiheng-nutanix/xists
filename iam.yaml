@@ -1,0 +1,129 @@
+swagger: '2.0'
+info:
+  title: IAM API
+  description: Move programming from the user to the machine.
+  version: "1.0.0"
+schemes:
+  - https
+securityDefinitions:
+  basicAuth:
+    type : basic
+security:
+  - basicAuth: []
+# basePath: /v3_iam
+produces:
+  - application/json
+parameters:
+
+  uuid:
+    name: uuid
+    in: path
+    description: The UUID of the entity.
+    type: string
+    format: UUID
+    required: true
+    pattern: ^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$
+    x-example: 0e09cf83-ac68-4f28-af70-6df9a43df4f0
+  cloud_type:
+    name: cloud_type
+    in: path
+    description: The Cloud Type.
+    required: true
+    type: string
+    pattern: (\bAWS\b|\bAZURE\b|\bNUTANIX_HOSTED_CLOUD\b|\bONPREM_CLOUD\b)
+paths:
+  "/iam/service_token":
+    post:
+      x-doc-hide: true
+      tags: ["iam"]
+      summary: Token endpoint for service to service authentication
+      description: Token endpoint for service to service authentication
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - name: audience
+          in: formData
+          type: string
+          description: the service provider audience uri.
+          maxLength: 1000
+        - name: domain
+          in: formData
+          type: string
+          description: the service provider domain name.
+          maxLength: 1000
+        - name: assertion
+          in: formData
+          type: string
+          description: the jwt token from service (self-signed) or from idp (federated IAMs).
+          maxLength: 4000
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: '#/definitions/iam_token_response'
+        default:
+          description: Internal Error
+          schema:
+            $ref: '#/definitions/status'
+
+definitions:
+  api_version:
+    title: API Version
+    description: API Version of the Nutanix v3 API framework.
+    type: string
+    readOnly: true
+    default: 3.1.0
+  status:
+    type: object
+    title: Response Kind
+    description: |
+      The status of a REST API call. Only used when there is a failure to
+      report.
+    properties:
+      api_version:
+        $ref: '#/definitions/api_version'
+      kind:
+        type: string
+        readOnly: true
+        description: 'The entitys kind. i.e. "status".'
+      status:
+        type: string
+        readOnly: true
+        description: 'Only value possible is "failure".'
+      reason:
+        type: string
+        readOnly: true
+        description: One snake case word.
+      message:
+        type: string
+        readOnly: true
+        description: A sentence explaining the reason for the status.
+      details:
+        type: object
+        readOnly: true
+        description: Custom key-value details relevant to the status.
+        additionalProperties:
+          type: string
+      code:
+        type: integer
+        readOnly: true
+        description: The HTTP error code.
+  iam_token_response:
+    type: object
+    title: IAM token response
+    description: IAM token response
+    required:
+    - access_token
+    - token_type
+    - expires_in
+    properties:
+      access_token:
+        description: access_token
+        type: string
+      token_type:
+        description: The typical value is "bearer".
+        type: string
+      expires_in:
+        description: Token expiration time in seconds
+        type: integer
+        format: int64
